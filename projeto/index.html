@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Validador de Voucher</title>
+    <!--CSS importado-->
+    <link rel="stylesheet" href="assets/css/style.css" />
+  </head>
+  <body>
+    <h1>Validador de Voucher</h1>
+    <input
+      type="text"
+      id="voucherCode"
+      placeholder="Digite o código do voucher"
+    />
+    <button onclick="validateVoucher()">Validar Voucher</button>
+    <button onclick="validateVoucher()">Validar Voucher</button>
+    <div id="message" class="message"></div>
+
+    <h2>Vouchers Validados</h2>
+    <div id="validatedVouchers" class="voucher-list"></div>
+
+    <h2>Vouchers Não Validados</h2>
+    <div id="unvalidatedVouchers" class="voucher-list"></div>
+    <!--scrip importado-->
+    <script type="module" src="assets/js/gerador.js"></script>
+  </body>
+</html>
