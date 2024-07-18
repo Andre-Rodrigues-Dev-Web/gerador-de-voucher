@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gerador de Voucher</title>
+    <title>Validador de Voucher</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -33,72 +33,81 @@
             margin-top: 20px;
             font-weight: bold;
         }
+        .voucher-list {
+            margin-top: 20px;
+            text-align: left;
+            display: inline-block;
+            width: 100%;
+            max-width: 600px;
+        }
+        .voucher-list div {
+            margin: 5px 0;
+        }
     </style>
 </head>
 <body>
-    <h1>Gerador de Voucher</h1>
-    <input type="text" id="cpf" placeholder="Digite seu CPF" />
-    <button onclick="generateVoucher()">Gerar Voucher</button>
+    <h1>Validador de Voucher</h1>
+    <input type="text" id="voucherCode" placeholder="Digite o código do voucher" />
+    <button onclick="validateVoucher()">Validar Voucher</button>
     <div id="message" class="message"></div>
 
-    <script>
-        function generateVoucher() {
-            const cpfInput = document.getElementById('cpf').value;
-            const messageDiv = document.getElementById('message');
+    <h2>Vouchers Validados</h2>
+    <div id="validatedVouchers" class="voucher-list"></div>
 
-            if (!isValidCPF(cpfInput)) {
-                messageDiv.textContent = 'CPF inválido. Por favor, insira um CPF válido.';
-                return;
-            }
+    <h2>Vouchers Não Validados</h2>
+    <div id="unvalidatedVouchers" class="voucher-list"></div>
+
+    <script>
+        function validateVoucher() {
+            const voucherCodeInput = document.getElementById('voucherCode').value;
+            const messageDiv = document.getElementById('message');
 
             const storedData = JSON.parse(localStorage.getItem('voucherData')) || { generatedVouchers: {}, unvalidatedVouchers: {}, validatedVouchers: {} };
             
-            if (storedData.generatedVouchers[cpfInput]) {
-                messageDiv.textContent = 'Oops, você já gerou o seu voucher.';
+            if (!storedData.unvalidatedVouchers[voucherCodeInput]) {
+                messageDiv.textContent = 'Voucher inválido ou já utilizado.';
                 return;
             }
 
-            if (Object.keys(storedData.unvalidatedVouchers).length >= 10) {
-                messageDiv.textContent = 'Limite de vouchers não validados atingido.';
-                return;
-            }
+            messageDiv.textContent = 'Voucher validado com sucesso!';
 
-            const voucherCode = 'connect' + cpfInput.slice(0, 3) + Math.random().toString(36).substring(2, 4);
-            storedData.generatedVouchers[cpfInput] = voucherCode;
-            storedData.unvalidatedVouchers[voucherCode] = cpfInput;
+            const cpf = storedData.unvalidatedVouchers[voucherCodeInput];
+            delete storedData.unvalidatedVouchers[voucherCodeInput];
+            storedData.validatedVouchers[voucherCodeInput] = cpf;
+
+            if (Object.keys(storedData.validatedVouchers).length > 10) {
+                const oldestKey = Object.keys(storedData.validatedVouchers)[0];
+                delete storedData.validatedVouchers[oldestKey];
+            }
 
             localStorage.setItem('voucherData', JSON.stringify(storedData));
 
-            messageDiv.textContent = 'Seu voucher é: ' + voucherCode;
+            updateVoucherLists();
         }
 
-        function isValidCPF(cpf) {
-            cpf = cpf.replace(/\D/g, '');
-            if (cpf.length !== 11) return false;
-            if (/^(\d)\1+$/.test(cpf)) return false;
+        function updateVoucherLists() {
+            const validatedVouchersDiv = document.getElementById('validatedVouchers');
+            const unvalidatedVouchersDiv = document.getElementById('unvalidatedVouchers');
 
-            let sum = 0;
-            let remainder;
+            validatedVouchersDiv.innerHTML = '';
+            unvalidatedVouchersDiv.innerHTML = '';
 
-            // Validate first digit
-            for (let i = 1; i <= 9; i++) {
-                sum += parseInt(cpf.charAt(i - 1)) * (11 - i);
-            }
-            remainder = (sum * 10) % 11;
-            if (remainder === 10 || remainder === 11) remainder = 0;
-            if (remainder !== parseInt(cpf.charAt(9))) return false;
+            const storedData = JSON.parse(localStorage.getItem('voucherData')) || { validatedVouchers: {}, unvalidatedVouchers: {} };
 
-            // Validate second digit
-            sum = 0;
-            for (let i = 1; i <= 10; i++) {
-                sum += parseInt(cpf.charAt(i - 1)) * (12 - i);
-            }
-            remainder = (sum * 10) % 11;
-            if (remainder === 10 || remainder === 11) remainder = 0;
-            if (remainder !== parseInt(cpf.charAt(10))) return false;
+            const validatedKeys = Object.keys(storedData.validatedVouchers || {});
+            const unvalidatedKeys = Object.keys(storedData.unvalidatedVouchers || {});
 
-            return true;
+            validatedKeys.forEach(voucher => {
+                validatedVouchersDiv.innerHTML += `<div>${storedData.validatedVouchers[voucher]} - ${voucher}</div>`;
+            });
+
+            unvalidatedKeys.forEach(voucher => {
+                unvalidatedVouchersDiv.innerHTML += `<div>${storedData.unvalidatedVouchers[voucher]} - ${voucher}</div>`;
+            });
         }
+
+        window.addEventListener('storage', updateVoucherLists);
+        updateVoucherLists();
     </script>
 </body>
 </html>
